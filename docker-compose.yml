@@ -32,7 +32,7 @@ services:
       - MYSQL_USER=WP_dbuser
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
     volumes:
-      - /var/opt/appdata/appdata/mariadb:/config
+      - /var/opt/appdata/mariadb:/config
     restart: unless-stopped
 
   letsencrypt:
