@@ -45,7 +45,7 @@ services:
       - PGID=1000
       - TZ=Europe/Prague
       - URL=${URL}
-      - SUBDOMAINS=wildcard
+      - SUBDOMAINS=${SUBDOMAINS}
       - VALIDATION=http
     volumes:
       - /var/opt/appdata/letsencrypt:/config
