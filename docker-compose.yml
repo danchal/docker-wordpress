@@ -1,0 +1,69 @@
+#1. Letsencryt, nginx
+#
+#
+#2. Ddclient
+#   Edit ddclient.conf
+# #
+# # CloudFlare (www.cloudflare.com)
+# #
+# use=web
+# web=diagnostic.opendns.com/myip
+#
+# protocol=cloudflare,        \
+# zone=domain.tld,            \
+# ttl=1,                      \
+# login=your-login-email,     \
+# password=APIKey             \
+# domain.tld,my.domain.tld
+#
+
+---
+version: "2"
+services:
+  mariadb:
+    image: linuxserver/mariadb
+    container_name: mariadb
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Prague
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=WP_database
+      - MYSQL_USER=WP_dbuser
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    volumes:
+      - /var/opt/appdata/appdata/mariadb:/config
+    restart: unless-stopped
+
+  letsencrypt:
+    image: linuxserver/letsencrypt
+    container_name: letsencrypt
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Prague
+      - URL=${URL}
+      - SUBDOMAINS=wildcard
+      - VALIDATION=http
+    volumes:
+      - /var/opt/appdata/letsencrypt:/config
+    ports:
+      - 443:443
+      - 80:80
+    depends_on:
+      - mariadb
+    restart: unless-stopped
+
+  ddclient:
+    image: linuxserver/ddclient
+    hostname: ddclient
+    container_name: ddclient
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Prague
+    volumes:
+      - /var/opt/appdata/ddclient:/config
+    restart: unless-stopped
