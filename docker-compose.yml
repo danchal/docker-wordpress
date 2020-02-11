@@ -1,69 +1,76 @@
-#1. Letsencryt, nginx
-#
-#
-#2. Ddclient
-#   Edit ddclient.conf
-# #
-# # CloudFlare (www.cloudflare.com)
-# #
-# use=web
-# web=diagnostic.opendns.com/myip
-#
-# protocol=cloudflare,        \
-# zone=domain.tld,            \
-# ttl=1,                      \
-# login=your-login-email,     \
-# password=APIKey             \
-# domain.tld,my.domain.tld
-#
-
 ---
-version: "2"
+version: "3"
 services:
-  mariadb:
-    image: linuxserver/mariadb
-    container_name: mariadb
+
+  wordpress:
+    image: wordpress:fpm-alpine
+    hostname: wordpress
+    networks:
+      - proxy
+      - db
+    env_file:
+      - ${SECRETSDIR}/${DOCKER_MACHINE_NAME}/wordpress.env
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/Prague
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-      - MYSQL_DATABASE=WP_database
-      - MYSQL_USER=WP_dbuser
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: wp
+      WORDPRESS_DB_NAME: wp
     volumes:
-      - /var/opt/appdata/mariadb:/config
+      - ${APPDATADIR}/data/wordpress:/var/www/html
+    depends_on:
+      - db
     restart: unless-stopped
 
   letsencrypt:
     image: linuxserver/letsencrypt
-    container_name: letsencrypt
+    hostname: letsencrypt
+    networks:
+      - proxy
     cap_add:
       - NET_ADMIN
+    env_file:
+      - ${SECRETSDIR}/${DOCKER_MACHINE_NAME}/letsencrypt.env
+      - ${SECRETSDIR}/${DOCKER_MACHINE_NAME}/linuxserver.env
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/Prague
-      - URL=${URL}
-      - SUBDOMAINS=${SUBDOMAINS}
       - VALIDATION=http
     volumes:
-      - /var/opt/appdata/letsencrypt:/config
+      - ${APPDATADIR}/data/wordpress:/var/www/html:ro
+      - ${APPDATADIR}/config/letsencrypt:/config
     ports:
       - 443:443
       - 80:80
-    depends_on:
-      - mariadb
+    restart: unless-stopped
+
+  db:
+    image: linuxserver/mariadb
+    hostname: db
+    networks:
+      - db
+    env_file:
+      - ${SECRETSDIR}/${DOCKER_MACHINE_NAME}/db.env
+      - ${SECRETSDIR}/${DOCKER_MACHINE_NAME}/linuxserver.env
+    environment:
+      - MYSQL_DATABASE=wp
+      - MYSQL_USER=wp
+    volumes:
+      - ${APPDATADIR}/data/wordpress-db:/config
+    restart: unless-stopped
+
+  redis:
+    image: redis:alpine
+    hostname: redis
+    networks:
+      - proxy
     restart: unless-stopped
 
   ddclient:
     image: linuxserver/ddclient
     hostname: ddclient
-    container_name: ddclient
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/Prague
+    env_file:
+      - ${SECRETSDIR}/${DOCKER_MACHINE_NAME}/linuxserver.env
     volumes:
-      - /var/opt/appdata/ddclient:/config
+      - ${APPDATADIR}/config/ddclient:/config
     restart: unless-stopped
+
+networks:
+  proxy:
+  db:
