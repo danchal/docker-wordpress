@@ -6,61 +6,59 @@ services:
     image: wordpress:fpm
     hostname: wordpress
     networks:
-      - proxy
+      - web
       - db
     env_file:
       - ${SECRETSDIR}/${DOCKER_MACHINE_NAME}/wordpress.env
     environment:
-      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_HOST: db:3306
       WORDPRESS_DB_USER: wp
       WORDPRESS_DB_NAME: wp
     volumes:
       - /mnt/${DOCKER_MACHINE_NAME}_wp:/var/www/html
-      - ${APPDATADIR}/config/wordpress/php-local.ini:/usr/local/etc/php/conf.d/php-local.ini
+      - ${APPDATADIR}/config/wordpress/php-local.ini:/usr/local/etc/php/conf.d/php-local.ini:ro
     depends_on:
       - db
     restart: unless-stopped
 
-  letsencrypt:
-    image: linuxserver/letsencrypt
-    hostname: letsencrypt
+  web:
+    image: nginx
+    hostname: web
     networks:
-      - proxy
-    cap_add:
-      - NET_ADMIN
-    env_file:
-      - ${SECRETSDIR}/${DOCKER_MACHINE_NAME}/letsencrypt.env
-      - ${SECRETSDIR}/${DOCKER_MACHINE_NAME}/linuxserver.env
+      - web
     volumes:
       - /mnt/${DOCKER_MACHINE_NAME}_wp:/var/www/html:ro
-      - ${APPDATADIR}/config/letsencrypt:/config
+      - ${APPDATADIR}/config/web/nginx-conf:/etc/nginx/conf.d:ro
+      - ${APPDATADIR}/config/web/ssl:/etc/ssl:ro
     ports:
       - 443:443
       - 80:80
     restart: unless-stopped
 
   db:
-    image: linuxserver/mariadb
+    image: mariadb
     hostname: db
+    command: '--default-authentication-plugin=mysql_native_password'
     networks:
       - db
     env_file:
       - ${SECRETSDIR}/${DOCKER_MACHINE_NAME}/db.env
-      - ${SECRETSDIR}/${DOCKER_MACHINE_NAME}/linuxserver.env
     environment:
       - MYSQL_DATABASE=wp
       - MYSQL_USER=wp
     volumes:
-      - /mnt/${DOCKER_MACHINE_NAME}_db:/config
+      - /mnt/${DOCKER_MACHINE_NAME}_db:/var/lib/mysql
     restart: unless-stopped
 
-  redis:
-    image: redis:alpine
-    hostname: redis
-    networks:
-      - proxy
+  ddclient:
+    image: linuxserver/ddclient
+    hostname: ddclient
+    env_file:
+      - ${SECRETSDIR}/${DOCKER_MACHINE_NAME}/linuxserver.env
+    volumes:
+      - ${APPDATADIR}/config/ddclient:/config:ro
     restart: unless-stopped
 
 networks:
-  proxy:
+  web:
   db:
