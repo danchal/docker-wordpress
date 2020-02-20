@@ -16,7 +16,7 @@ services:
       WORDPRESS_DB_NAME: wp
     volumes:
       - ${APPDATADIR}/data/wordpress:/var/www/html
-      - ${APPDATADIR}/config/wordpress/php-local.ini:/usr/local/etc/php/conf.d/php-local.ini
+      - ${APPDATADIR}/config/wordpress/php-local.ini:/usr/local/etc/php/conf.d/php-local.ini:ro
     depends_on:
       - db
     restart: unless-stopped
@@ -54,12 +54,12 @@ services:
       - ${APPDATADIR}/data/wordpress-db:/config
     restart: unless-stopped
 
-  redis:
-    image: redis:alpine
-    hostname: redis
-    networks:
-      - proxy
-    restart: unless-stopped
+  # redis:
+  #   image: redis:alpine
+  #   hostname: redis
+  #   networks:
+  #     - proxy
+  #   restart: unless-stopped
 
   ddclient:
     image: linuxserver/ddclient

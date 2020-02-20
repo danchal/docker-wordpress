@@ -61,7 +61,7 @@ server {
 
         location ~ \.php$ {
                 #NOTE: You should have "cgi.fix_pathinfo = 0;" in php.ini
-                include /etc/nginx/fastcgi.conf;
+                include /etc/nginx/fastcgi_params;
                 fastcgi_intercept_errors on;
                 fastcgi_pass php;
         }
