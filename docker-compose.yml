@@ -5,6 +5,7 @@ services:
   wordpress:
     image: wordpress:fpm
     hostname: wordpress
+    container_name: wordpress
     networks:
       - proxy
       - db
@@ -24,6 +25,7 @@ services:
   letsencrypt:
     image: linuxserver/letsencrypt
     hostname: letsencrypt
+    container_name: letsencrypt
     networks:
       - proxy
     cap_add:
@@ -42,6 +44,7 @@ services:
   db:
     image: linuxserver/mariadb
     hostname: db
+    container_name: db
     networks:
       - db
     env_file:
@@ -64,6 +67,7 @@ services:
   ddclient:
     image: linuxserver/ddclient
     hostname: ddclient
+    container_name: ddclient
     env_file:
       - ${SECRETSDIR}/${DOCKER_MACHINE_NAME}/linuxserver.env
     volumes:
